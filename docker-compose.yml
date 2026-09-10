@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: scucel_db
+    restart: always
+    environment:
+      POSTGRES_DB: scucel_db
+      POSTGRES_USER: scucel_user
+      POSTGRES_PASSWORD: scucel_secure_password_2026
+    volumes:
+      - scucel_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - scucel_network
+
+  # Backend FastAPI Python
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scucel_backend
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://scucel_user:scucel_secure_password_2026@postgres:5432/scucel_db
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    volumes:
+      - scucel_uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - scucel_network
+
+  # Frontend React + Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: scucel_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - scucel_network
+
+volumes:
+  scucel_pgdata:
+  scucel_uploads:
+
+networks:
+  scucel_network:
+    driver: bridge
