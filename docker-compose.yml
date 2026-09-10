@@ -45,9 +45,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        # URL pública da API — defina via variável de ambiente no Easypanel
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     restart: unless-stopped
     expose:
       - "80"
