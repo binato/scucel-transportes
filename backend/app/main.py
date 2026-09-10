@@ -55,6 +55,15 @@ def on_startup():
     finally:
         db.close()
 
+@app.get("/")
+def root():
+    return {
+        "status": "online",
+        "service": "Scucel Transportes API",
+        "docs": "/docs",
+        "version": "1.0.0"
+    }
+
 @app.get("/api/health")
 def health_check():
     return {
