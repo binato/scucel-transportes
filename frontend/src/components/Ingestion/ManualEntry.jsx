@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createAbastecimento, updateAbastecimento, fetchAbastecimentos, fetchContexto, uploadComprovante, API_BASE_URL } from '../../services/api';
 import { compressImage } from '../../services/images';
+import ReceiptAttachmentPicker from '../ReceiptAttachmentPicker';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 const fmt = value => value ? value.split('-').reverse().join('/') : '-';
@@ -108,8 +109,9 @@ export default function ManualEntry({ veiculos, onSuccessSave }) {
     finally { setSaving(false); }
   };
 
-  const handleImage = async (event, setter) => {
-    try { setter(await compressImage(event.target.files?.[0])); }
+  const handleImage = async (file, setter) => {
+    const selectedFile = file?.target ? file.target.files?.[0] : file;
+    try { setter(await compressImage(selectedFile)); }
     catch (error) { setMessage(error.message); }
   };
 
@@ -134,6 +136,13 @@ export default function ManualEntry({ veiculos, onSuccessSave }) {
       <div className="form-grid">
         <label>Imagem da nota de combustível<input className="input-custom" type="file" accept="image/*" capture="environment" onChange={event => handleImage(event, setNoteFile)} /></label>
         {(noteFile || noteUrl) && <a href={noteFile ? URL.createObjectURL(noteFile) : `${API_BASE_URL}${noteUrl}`} target="_blank" rel="noreferrer">Ver comprovante</a>}
+        <ReceiptAttachmentPicker
+          label="Imagem da nota de combustível"
+          file={noteFile}
+          existingUrl={noteUrl ? `${API_BASE_URL}${noteUrl}` : ''}
+          onSelect={file => handleImage(file, setNoteFile)}
+          onClear={() => setNoteFile(null)}
+        />
       </div>
       <label className="check-label"><input type="checkbox" checked={hasExpense} onChange={event => setHasExpense(event.target.checked)} /> Houve outra despesa?</label>
       {hasExpense && <div className="form-grid">
@@ -142,6 +151,13 @@ export default function ManualEntry({ veiculos, onSuccessSave }) {
         <label>Valor (R$)<input className="input-custom" type="number" min="0.01" step="0.01" value={expenseValue} onChange={event => setExpenseValue(event.target.value)} required /></label>
         <label>Imagem da despesa<input className="input-custom" type="file" accept="image/*" capture="environment" onChange={event => handleImage(event, setExpenseFile)} /></label>
         {(expenseFile || expenseUrl) && <a href={expenseFile ? URL.createObjectURL(expenseFile) : `${API_BASE_URL}${expenseUrl}`} target="_blank" rel="noreferrer">Ver comprovante da despesa</a>}
+        <ReceiptAttachmentPicker
+          label="Imagem da despesa"
+          file={expenseFile}
+          existingUrl={expenseUrl ? `${API_BASE_URL}${expenseUrl}` : ''}
+          onSelect={file => handleImage(file, setExpenseFile)}
+          onClear={() => setExpenseFile(null)}
+        />
       </div>}
       <div className="form-actions"><button className="btn-primary" disabled={saving}>{saving ? 'Salvando...' : editingId ? 'Salvar edição' : 'Adicionar entrada'}</button>{editingId && <button type="button" className="btn-secondary" onClick={clear}>Cancelar edição</button>}</div>
     </form>

@@ -21,6 +21,7 @@ import {
 } from '../../services/offlineStorage';
 import { createAbastecimento, uploadComprovante } from '../../services/api';
 import { compressImage } from '../../services/images';
+import ReceiptAttachmentPicker from '../ReceiptAttachmentPicker';
 
 const fileAsDataUrl = file => new Promise((resolve, reject) => {
   if (!file) return resolve(null);
@@ -80,6 +81,11 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
   const handleVehicleChange = (plate) => {
     setSelectedPlate(plate);
     saveLastPlate(plate);
+  };
+
+  const handleReceiptSelection = async (file, setter) => {
+    try { setter(await compressImage(file)); }
+    catch (error) { setMsg({ type: 'error', text: error.message }); }
   };
 
   const handleSubmit = async (e) => {
@@ -317,7 +323,7 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
         )}
 
         {/* Mobile Input Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <form className="driver-pwa-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           
           {/* Truck selection */}
           <div>
@@ -412,6 +418,13 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
               catch (error) { setMsg({ type: 'error', text: error.message }); }
             }} />
           </label>
+          <ReceiptAttachmentPicker
+            label="Foto da nota de combustível"
+            file={noteFile}
+            onSelect={file => handleReceiptSelection(file, setNoteFile)}
+            onClear={() => setNoteFile(null)}
+            cameraEnabled
+          />
           {noteFile && <small>Imagem compactada: {Math.round(noteFile.size / 1024)} KB</small>}
           <div style={{ background: '#111827', padding: '0.65rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#e2e8f0', cursor: 'pointer', fontWeight: '600' }}>
@@ -432,6 +445,13 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
                     catch (error) { setMsg({ type: 'error', text: error.message }); }
                   }} />
                 </label>
+                <ReceiptAttachmentPicker
+                  label="Foto do comprovante da despesa"
+                  file={expenseFile}
+                  onSelect={file => handleReceiptSelection(file, setExpenseFile)}
+                  onClear={() => setExpenseFile(null)}
+                  cameraEnabled
+                />
                 <input
                   type="text"
                   className="input-custom"

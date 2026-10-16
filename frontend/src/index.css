@@ -290,6 +290,39 @@ body {
 .main-nav { flex-wrap: wrap; min-width: 0; }
 .input-custom[type="file"] { max-width: 100%; }
 
+/* The legacy native controls remain mounted for compatibility; the picker below is their accessible visual replacement. */
+.manual-entry label:has(input[type="file"]), .driver-pwa-form label:has(input[type="file"]) { display: none; }
+.manual-entry .form-grid > a:has(+ .receipt-picker) { display: none; }
+.receipt-picker {
+  width: 100%;
+  padding: 0.85rem;
+  border: 1px dashed rgba(148, 163, 184, 0.36);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.92));
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.receipt-picker-heading { display: flex; justify-content: space-between; gap: 0.75rem; align-items: flex-start; }
+.receipt-picker-label { display: block; color: var(--text-primary); font-size: 0.86rem; font-weight: 700; }
+.receipt-picker-help { display: block; margin-top: 0.15rem; color: var(--text-muted); font-size: 0.72rem; }
+.receipt-picker-status { color: #6ee7b7; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.28); border-radius: 999px; padding: 0.2rem 0.45rem; font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
+.receipt-picker-empty { min-height: 62px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.3rem; color: var(--text-muted); background: rgba(15, 23, 42, 0.65); border-radius: 9px; font-size: 0.76rem; }
+.receipt-picker-preview { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 0.65rem; padding: 0.45rem; background: rgba(15, 23, 42, 0.68); border-radius: 9px; }
+.receipt-picker-preview img { width: 58px; height: 58px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle); }
+.receipt-picker-file-details { min-width: 0; display: flex; flex-direction: column; gap: 0.16rem; color: var(--text-secondary); font-size: 0.72rem; }
+.receipt-picker-file-details strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); font-size: 0.78rem; }
+.receipt-picker-file-details a { color: #93c5fd; }
+.receipt-picker-actions { display: flex; gap: 0.55rem; }
+.receipt-picker-actions button, .receipt-picker-remove { border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; font: inherit; font-size: 0.78rem; font-weight: 700; transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease; }
+.receipt-picker-camera, .receipt-picker-gallery { min-height: 42px; padding: 0.55rem 0.8rem; flex: 1; }
+.receipt-picker-camera { color: #fff; background: linear-gradient(135deg, #2563eb, #1d4ed8); border: 1px solid rgba(147, 197, 253, 0.3); }
+.receipt-picker-gallery { color: #dbeafe; background: #1e293b; border: 1px solid rgba(148, 163, 184, 0.28); }
+.receipt-picker-remove { padding: 0.38rem 0.5rem; color: #fecdd3; background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.24); }
+.receipt-picker-actions button:hover, .receipt-picker-remove:hover { transform: translateY(-1px); border-color: rgba(191, 219, 254, 0.6); }
+.receipt-picker-actions button:focus-visible, .receipt-picker-remove:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); }
+.receipt-picker-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+
 @media (max-width: 650px) {
   main { padding-left: 0.65rem !important; padding-right: 0.65rem !important; }
   header.glass-panel { margin: 0.65rem !important; padding: 0.75rem !important; }
@@ -308,4 +341,10 @@ body {
   .recent-entry { align-items: stretch; flex-direction: column; }
   .entry-buttons button { flex: 1; justify-content: center; }
   .powerbi-table { min-width: 920px; }
+  .receipt-picker { padding: 0.8rem; }
+  .receipt-picker-actions { flex-direction: column; }
+  .receipt-picker-actions button { min-height: 44px; width: 100%; }
+  .receipt-picker-preview { grid-template-columns: 52px minmax(0, 1fr); }
+  .receipt-picker-preview img { width: 52px; height: 52px; }
+  .receipt-picker-remove { grid-column: 1 / -1; width: 100%; min-height: 36px; }
 }
