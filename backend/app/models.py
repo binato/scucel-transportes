@@ -45,6 +45,7 @@ class Abastecimento(Base):
     custo_km_diesel = Column(Float, nullable=True)
     origem_registro = Column(String(30), default="MANUAL") # 'MANUAL', 'IA_VISION', 'PWA_MOTORISTA', 'EXCEL_IMPORT'
     foto_comprovante_url = Column(String(255), nullable=True)
+    client_id = Column(String(100), unique=True, nullable=True, index=True)
     aprovado = Column(Boolean, default=True)
     observacoes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -64,8 +65,15 @@ class Despesa(Base):
     categoria = Column(String(50), default="OUTROS") # 'PNEU', 'LAVAGEM', 'OFICINA', 'SEGURO', 'AUTOTRAC', 'HOTEL', 'OUTROS'
     descricao = Column(String(255), nullable=False)
     valor = Column(Float, nullable=False)
+    foto_comprovante_url = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     veiculo = relationship("Veiculo", back_populates="despesas")
     motorista = relationship("Motorista", back_populates="despesas")
     abastecimento = relationship("Abastecimento", back_populates="despesas")
+
+class Configuracao(Base):
+    __tablename__ = "configuracoes"
+
+    chave = Column(String(50), primary_key=True)
+    valor = Column(Float, nullable=False)

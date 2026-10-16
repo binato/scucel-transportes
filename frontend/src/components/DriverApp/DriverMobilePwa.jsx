@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Smartphone, 
   Wifi, 
@@ -19,13 +19,29 @@ import {
   saveLastPlate, 
   getLastPlate 
 } from '../../services/offlineStorage';
-import { createAbastecimento, createDespesa, fetchUltimoKm } from '../../services/api';
+import { createAbastecimento, uploadComprovante } from '../../services/api';
+import { compressImage } from '../../services/images';
+
+const fileAsDataUrl = file => new Promise((resolve, reject) => {
+  if (!file) return resolve(null);
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => reject(new Error('Falha ao ler imagem'));
+  reader.readAsDataURL(file);
+});
+const dataUrlAsFile = (dataUrl) => {
+  const [header, body] = dataUrl.split(',');
+  const mime = header.match(/data:(.*?);/)?.[1] || 'image/jpeg';
+  const bytes = Uint8Array.from(atob(body), character => character.charCodeAt(0));
+  return new File([bytes], 'comprovante.jpg', { type: mime });
+};
 
 export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingRecords, setPendingRecords] = useState([]);
   const [syncing, setSyncing] = useState(false);
   const [msg, setMsg] = useState(null);
+  const lastAutoAttempt = useRef('');
 
   // Form State
   const [selectedPlate, setSelectedPlate] = useState(getLastPlate() || (veiculos[0]?.placa || ''));
@@ -33,12 +49,18 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
   const [litrosDiesel, setLitrosDiesel] = useState('');
   const [litrosArla, setLitrosArla] = useState('');
   const [valorNota, setValorNota] = useState('');
+  const [noteFile, setNoteFile] = useState(null);
+  const [expenseFile, setExpenseFile] = useState(null);
   
   // Expense
   const [hasExpense, setHasExpense] = useState(false);
   const [despDesc, setDespDesc] = useState('');
   const [despVal, setDespVal] = useState('');
   const [despCat, setDespCat] = useState('OUTROS');
+
+  useEffect(() => {
+    if (!selectedPlate && veiculos.length) setSelectedPlate(veiculos[0].placa);
+  }, [veiculos, selectedPlate]);
 
   // Monitor network status
   useEffect(() => {
@@ -68,7 +90,14 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
     }
 
     const vehicleObj = veiculos.find(v => v.placa === selectedPlate);
+    let receiptData;
+    let expenseReceiptData;
+    try {
+      receiptData = await fileAsDataUrl(noteFile);
+      expenseReceiptData = await fileAsDataUrl(expenseFile);
+    } catch (error) { setMsg({ type: 'error', text: error.message }); return; }
     const payload = {
+      client_id: crypto.randomUUID(),
       placa: selectedPlate,
       veiculo_id: vehicleObj ? vehicleObj.id : null,
       data: new Date().toISOString().split('T')[0],
@@ -77,6 +106,8 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
       litros_arla: parseFloat(litrosArla) || 0,
       valor_total_nota: parseFloat(valorNota),
       origem_registro: 'PWA_MOTORISTA',
+      receiptData,
+      expenseReceiptData,
       despesa: hasExpense && despDesc && despVal ? {
         descricao: despDesc,
         valor: parseFloat(despVal),
@@ -86,51 +117,49 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
 
     if (!isOnline) {
       // Offline mode: save locally
-      savePendingRecord(payload);
-      setPendingRecords(getPendingRecords());
-      setMsg({ type: 'warning', text: '📡 Sem internet na estrada: Lançamento salvo no seu celular! Será enviado assim que reconectar.' });
-      resetForm();
+      try {
+        savePendingRecord(payload);
+        setPendingRecords(getPendingRecords());
+        setMsg({ type: 'warning', text: 'Sem internet: lançamento salvo neste aparelho para sincronização.' });
+        resetForm();
+      } catch (error) { setMsg({ type: 'error', text: 'Não foi possível salvar offline. Libere espaço neste aparelho.' }); }
     } else {
       // Online mode: send directly
       try {
         setSyncing(true);
-        const abastRes = await createAbastecimento({
+        const noteUrl = receiptData ? await uploadComprovante(dataUrlAsFile(receiptData)) : null;
+        const expenseUrl = expenseReceiptData ? await uploadComprovante(dataUrlAsFile(expenseReceiptData)) : null;
+        await createAbastecimento({
           veiculo_id: payload.veiculo_id,
+          client_id: payload.client_id,
           data: payload.data,
           km_final: payload.km_final,
           litros_diesel: payload.litros_diesel,
           litros_arla: payload.litros_arla,
           valor_total_nota: payload.valor_total_nota,
-          origem_registro: 'PWA_MOTORISTA'
+          origem_registro: 'PWA_MOTORISTA',
+          foto_comprovante_url: noteUrl,
+          despesa: payload.despesa ? { ...payload.despesa, foto_comprovante_url: expenseUrl } : null,
         });
-
-        if (payload.despesa) {
-          await createDespesa({
-            veiculo_id: payload.veiculo_id,
-            abastecimento_id: abastRes.id,
-            data: payload.data,
-            categoria: payload.despesa.categoria,
-            descricao: payload.despesa.descricao,
-            valor: payload.despesa.valor
-          });
-        }
 
         setMsg({ type: 'success', text: '✓ Abastecimento enviado diretamente para a central da Scucel!' });
         resetForm();
         if (onSyncSuccess) onSyncSuccess();
       } catch (err) {
         // fallback to offline queue
-        savePendingRecord(payload);
-        setPendingRecords(getPendingRecords());
-        setMsg({ type: 'warning', text: 'Servidor ocupado. Salvo no celular para sincronizar depois.' });
-        resetForm();
+        try {
+          savePendingRecord(payload);
+          setPendingRecords(getPendingRecords());
+          setMsg({ type: 'warning', text: 'Servidor indisponível. Salvo neste aparelho para sincronizar depois.' });
+          resetForm();
+        } catch (storageError) { setMsg({ type: 'error', text: 'Falha ao enviar e salvar offline. Tente novamente.' }); }
       } finally {
         setSyncing(false);
       }
     }
   };
 
-  const handleManualSync = async () => {
+  const handleManualSync = useCallback(async () => {
     const list = getPendingRecords();
     if (list.length === 0) return;
 
@@ -143,26 +172,20 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
         const vehicleObj = veiculos.find(v => v.placa === item.placa);
         const vId = vehicleObj ? vehicleObj.id : item.veiculo_id;
 
-        const abastRes = await createAbastecimento({
+        const noteUrl = item.receiptData ? await uploadComprovante(dataUrlAsFile(item.receiptData)) : null;
+        const expenseUrl = item.expenseReceiptData ? await uploadComprovante(dataUrlAsFile(item.expenseReceiptData)) : null;
+        await createAbastecimento({
           veiculo_id: vId,
+          client_id: item.client_id || item.id_temp,
           data: item.data,
           km_final: item.km_final,
           litros_diesel: item.litros_diesel,
           litros_arla: item.litros_arla,
           valor_total_nota: item.valor_total_nota,
-          origem_registro: 'PWA_MOTORISTA'
+          origem_registro: 'PWA_MOTORISTA',
+          foto_comprovante_url: noteUrl,
+          despesa: item.despesa ? { ...item.despesa, foto_comprovante_url: expenseUrl } : null,
         });
-
-        if (item.despesa) {
-          await createDespesa({
-            veiculo_id: vId,
-            abastecimento_id: abastRes.id,
-            data: item.data,
-            categoria: item.despesa.categoria,
-            descricao: item.despesa.descricao,
-            valor: item.despesa.valor
-          });
-        }
 
         removePendingRecord(item.id_temp);
         successCount++;
@@ -173,15 +196,26 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
 
     setPendingRecords(getPendingRecords());
     setSyncing(false);
-    setMsg({ type: 'success', text: `✓ Sincronizados ${successCount} registros pendentes com sucesso!` });
+    setMsg({ type: successCount === list.length ? 'success' : 'warning', text: `${successCount} de ${list.length} lançamentos sincronizados.` });
     if (onSyncSuccess) onSyncSuccess();
-  };
+  }, [veiculos, onSyncSuccess]);
+
+  useEffect(() => {
+    if (!isOnline) { lastAutoAttempt.current = ''; return; }
+    if (!pendingRecords.length || syncing) return;
+    const key = pendingRecords.map(item => item.client_id || item.id_temp).join(',');
+    if (lastAutoAttempt.current === key) return;
+    lastAutoAttempt.current = key;
+    void handleManualSync();
+  }, [isOnline, pendingRecords, syncing, handleManualSync]);
 
   const resetForm = () => {
     setKmFinal('');
     setLitrosDiesel('');
     setLitrosArla('');
     setValorNota('');
+    setNoteFile(null);
+    setExpenseFile(null);
     setHasExpense(false);
     setDespDesc('');
     setDespVal('');
@@ -372,6 +406,13 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
           </div>
 
           {/* Despesa Extra */}
+          <label>Foto da nota de combustível
+            <input className="input-custom" type="file" accept="image/*" capture="environment" onChange={async event => {
+              try { setNoteFile(await compressImage(event.target.files?.[0])); }
+              catch (error) { setMsg({ type: 'error', text: error.message }); }
+            }} />
+          </label>
+          {noteFile && <small>Imagem compactada: {Math.round(noteFile.size / 1024)} KB</small>}
           <div style={{ background: '#111827', padding: '0.65rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#e2e8f0', cursor: 'pointer', fontWeight: '600' }}>
               <input
@@ -385,6 +426,12 @@ export default function DriverMobilePwa({ veiculos, onSyncSuccess }) {
 
             {hasExpense && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                <label>Foto do comprovante da despesa
+                  <input className="input-custom" type="file" accept="image/*" capture="environment" onChange={async event => {
+                    try { setExpenseFile(await compressImage(event.target.files?.[0])); }
+                    catch (error) { setMsg({ type: 'error', text: error.message }); }
+                  }} />
+                </label>
                 <input
                   type="text"
                   className="input-custom"

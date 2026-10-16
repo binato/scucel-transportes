@@ -2,10 +2,32 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
-from ..models import Veiculo
+from ..models import Veiculo, Configuracao
+from pydantic import BaseModel, Field
 from ..schemas import VeiculoCreate, VeiculoResponse
 
 router = APIRouter(prefix="/api/veiculos", tags=["Veículos"])
+
+class MetaFrota(BaseModel):
+    meta_km_l: float = Field(gt=0)
+
+@router.get("/meta-frota", response_model=MetaFrota)
+def get_meta_frota(db: Session = Depends(get_db)):
+    setting = db.get(Configuracao, "meta_frota_km_l")
+    if setting:
+        return MetaFrota(meta_km_l=setting.valor)
+    vehicles = db.query(Veiculo).filter(Veiculo.ativo == True).all()
+    return MetaFrota(meta_km_l=sum(v.meta_km_l or 3.0 for v in vehicles) / len(vehicles) if vehicles else 3.0)
+
+@router.put("/meta-frota", response_model=MetaFrota)
+def put_meta_frota(payload: MetaFrota, db: Session = Depends(get_db)):
+    setting = db.get(Configuracao, "meta_frota_km_l")
+    if setting is None:
+        db.add(Configuracao(chave="meta_frota_km_l", valor=payload.meta_km_l))
+    else:
+        setting.valor = payload.meta_km_l
+    db.commit()
+    return payload
 
 @router.get("", response_model=List[VeiculoResponse])
 def list_veiculos(db: Session = Depends(get_db)):
@@ -22,7 +44,7 @@ def create_veiculo(payload: VeiculoCreate, db: Session = Depends(get_db)):
         modelo=payload.modelo or "Caminhão Scucel",
         ano=payload.ano,
         tipo=payload.tipo or "Cavalo Mecânico",
-        meta_km_l=payload.meta_km_l or 3.00,
+        meta_km_l=payload.meta_km_l if payload.meta_km_l is not None else 3.00,
         ativo=payload.ativo if payload.ativo is not None else True
     )
     db.add(v)

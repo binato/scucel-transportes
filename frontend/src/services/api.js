@@ -102,6 +102,58 @@ export async function createAbastecimento(data) {
   return res.json();
 }
 
+export async function updateAbastecimento(id, data) {
+  const res = await fetch(`${API_BASE_URL}/api/abastecimentos/${id}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(typeof err.detail === 'string' ? err.detail : 'Erro ao editar abastecimento');
+  }
+  return res.json();
+}
+
+export async function fetchContexto(veiculoId, data, kmFinal = 0, excluirId = null) {
+  const params = new URLSearchParams({ data, km_final: String(kmFinal) });
+  if (excluirId) params.set('excluir_id', String(excluirId));
+  const res = await fetch(`${API_BASE_URL}/api/abastecimentos/contexto/${veiculoId}?${params}`);
+  if (!res.ok) throw new Error('Falha ao consultar quilometragem');
+  return res.json();
+}
+
+export async function uploadComprovante(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_BASE_URL}/api/uploads/comprovante`, { method: 'POST', body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Falha ao enviar comprovante');
+  }
+  return (await res.json()).url;
+}
+
+export async function fetchMetaFrota() {
+  const res = await fetch(`${API_BASE_URL}/api/veiculos/meta-frota`);
+  if (!res.ok) throw new Error('Falha ao carregar meta da frota');
+  return res.json();
+}
+
+export async function updateMetaFrota(meta_km_l) {
+  const res = await fetch(`${API_BASE_URL}/api/veiculos/meta-frota`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ meta_km_l }),
+  });
+  if (!res.ok) throw new Error('Falha ao salvar meta da frota');
+  return res.json();
+}
+
+export async function updateVeiculo(id, data) {
+  const res = await fetch(`${API_BASE_URL}/api/veiculos/${id}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Falha ao salvar caminhão');
+  return res.json();
+}
+
 export async function createBulkLote(data) {
   const res = await fetch(`${API_BASE_URL}/api/abastecimentos/bulk-lote`, {
     method: 'POST',
@@ -132,6 +184,7 @@ export async function deleteAbastecimento(id) {
   const res = await fetch(`${API_BASE_URL}/api/abastecimentos/${id}`, {
     method: 'DELETE',
   });
+  if (!res.ok) throw new Error('Falha ao excluir abastecimento');
   return res.json();
 }
 
@@ -139,27 +192,7 @@ export async function deleteDespesa(id) {
   const res = await fetch(`${API_BASE_URL}/api/despesas/${id}`, {
     method: 'DELETE',
   });
-  return res.json();
-}
-
-export async function extractImageAi(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const res = await fetch(`${API_BASE_URL}/api/vision/extrair-foto`, {
-    method: 'POST',
-    body: formData,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || 'Erro na extração por IA');
-  }
-  return res.json();
-}
-
-export async function loadSamplePhoto() {
-  const res = await fetch(`${API_BASE_URL}/api/vision/carregar-amostra`);
-  if (!res.ok) throw new Error('Falha ao carregar foto de amostra');
+  if (!res.ok) throw new Error('Falha ao excluir despesa');
   return res.json();
 }
 

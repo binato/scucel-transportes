@@ -26,7 +26,7 @@ export default function DataTableMatrix({
   // Filter list by search term
   const filteredAbasts = (abastecimentos || []).filter(a => 
     (a.placa && a.placa.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (a.data && a.data.includes(searchTerm)) ||
+    (a.data && (a.data.includes(searchTerm) || a.data.split('-').reverse().join('/').includes(searchTerm))) ||
     (a.origem_registro && a.origem_registro.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -34,7 +34,7 @@ export default function DataTableMatrix({
     (d.placa && d.placa.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (d.descricao && d.descricao.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (d.categoria && d.categoria.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (d.data && d.data.includes(searchTerm))
+    (d.data && (d.data.includes(searchTerm) || d.data.split('-').reverse().join('/').includes(searchTerm)))
   );
 
   const currentList = activeTab === 'abastecimentos' ? filteredAbasts : filteredDespesas;
@@ -136,7 +136,7 @@ export default function DataTableMatrix({
                 paginatedData.map((a) => (
                   <tr key={a.id}>
                     <td><strong style={{ color: '#60a5fa' }}>{a.placa}</strong></td>
-                    <td>{a.data}</td>
+                    <td>{a.data?.split('-').reverse().join('/')}</td>
                     <td>{a.km_inicial ? a.km_inicial.toLocaleString('pt-BR') : '-'}</td>
                     <td><strong>{a.km_final ? a.km_final.toLocaleString('pt-BR') : '-'}</strong></td>
                     <td><span style={{ color: '#38bdf8' }}>{a.km_rodado ? a.km_rodado.toLocaleString('pt-BR') : '-'}</span></td>
@@ -206,7 +206,7 @@ export default function DataTableMatrix({
                 paginatedData.map((d) => (
                   <tr key={d.id}>
                     <td><strong style={{ color: '#60a5fa' }}>{d.placa}</strong></td>
-                    <td>{d.data}</td>
+                    <td>{d.data?.split('-').reverse().join('/')}</td>
                     <td>
                       <span style={{
                         padding: '0.15rem 0.45rem',

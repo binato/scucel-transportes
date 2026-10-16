@@ -1,6 +1,6 @@
 # Guia de Implantação: Scucel Transportes no Easypanel (VPS)
 
-Este guia orienta o passo a passo para colocar a aplicação no ar na sua VPS com **Easypanel** em menos de 5 minutos, com banco de dados persistente, SSL Let's Encrypt automático e custo zero de IA.
+Este guia orienta a implantação da aplicação na VPS com Easypanel, banco PostgreSQL, SSL e armazenamento persistente de comprovantes.
 
 ---
 
@@ -37,8 +37,6 @@ No painel do Easypanel (criando um projeto chamado `scucel-transportes`), você 
 4. **Variáveis de Ambiente (Environment Variables)**:
    ```env
    DATABASE_URL=postgresql://postgres:SUA_SENHA@postgres:5432/scucel_db
-   GEMINI_API_KEY=sua_chave_gratuita_do_google_ai_studio
-   OPENROUTER_API_KEY=sua_chave_gratuita_do_openrouter_opcional
    ```
 5. **Porta**: `8000`.
 6. **Domínio**: configure um subdomínio como `api.scucel.seudominio.com` (o Easypanel gerará o SSL HTTPS automaticamente).
@@ -60,13 +58,9 @@ No painel do Easypanel (criando um projeto chamado `scucel-transportes`), você 
 
 ---
 
-## 3. Como Obter a Chave Gratuita da IA (Google AI Studio)
+## 3. Comprovantes e atualização de banco
 
-1. Acesse: [https://aistudio.google.com/](https://aistudio.google.com/)
-2. Faça login com uma conta Google.
-3. Clique em **"Get API key"** > **"Create API key in new project"**.
-4. Copie a chave e cole na variável `GEMINI_API_KEY` do backend no Easypanel.
-5. **Pronto!** Você terá 1.500 requisições gratuitas por dia para extrair fotos de folhas de caminhoneiros.
+O frontend compacta imagens antes do envio. O backend aceita JPEG, PNG e WebP até 5 MB e grava em `/app/uploads`; mantenha o volume persistente. Na primeira inicialização após esta atualização, o backend adiciona as colunas novas de comprovante e identificador de sincronização sem descartar os registros existentes. Faça backup do PostgreSQL antes de publicar.
 
 ---
 

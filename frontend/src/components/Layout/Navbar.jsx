@@ -13,7 +13,6 @@ import {
 export default function Navbar({ activeTab, setActiveTab, apiOnline }) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard Analítico', icon: BarChart3, badge: 'Power BI' },
-    { id: 'ia-vision', label: 'Conferência IA (WhatsApp)', icon: Camera, badge: 'IA Grátis' },
     { id: 'manual-entry', label: 'Digitação Rápida', icon: Keyboard, badge: null },
     { id: 'driver-app', label: 'App Motorista (PWA)', icon: Smartphone, badge: 'Offline' },
     { id: 'fleet', label: 'Frota & Metas', icon: Truck, badge: null },
@@ -61,7 +60,7 @@ export default function Navbar({ activeTab, setActiveTab, apiOnline }) {
         </div>
 
         {/* Navigation Tabs */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#0e1524', padding: '0.3rem', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
+        <nav className="main-nav" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#0e1524', padding: '0.3rem', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -88,7 +87,7 @@ export default function Navbar({ activeTab, setActiveTab, apiOnline }) {
                 <Icon size={16} color={isActive ? '#ffffff' : '#94a3b8'} />
                 <span>{item.label}</span>
                 {item.badge && (
-                  <span style={{
+                  <span className="nav-badge" style={{
                     fontSize: '0.62rem',
                     padding: '0.1rem 0.35rem',
                     borderRadius: '4px',

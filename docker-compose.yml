@@ -28,8 +28,6 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-scucel_user}:${POSTGRES_PASSWORD:-scucel_password_2026}@postgres:5432/${POSTGRES_DB:-scucel_db}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     volumes:
       - scucel_uploads:/app/uploads
     expose:

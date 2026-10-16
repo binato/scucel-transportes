@@ -4,7 +4,7 @@ from sqlalchemy import func, extract
 from typing import List, Optional
 from datetime import date
 from ..database import get_db
-from ..models import Abastecimento, Despesa, Veiculo
+from ..models import Abastecimento, Despesa, Veiculo, Configuracao
 from ..schemas import KpiSummary, RankingVeiculo, EvolucaoTemporal, CategoriaDespesa, AuditoriaArlaItem
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard Analytics"])
@@ -47,7 +47,8 @@ def get_kpis(
 
     # Meta media da frota
     veiculos_ativos = db.query(Veiculo).filter(Veiculo.ativo == True).all()
-    meta_media = sum(v.meta_km_l for v in veiculos_ativos) / len(veiculos_ativos) if veiculos_ativos else 3.00
+    configured_meta = db.get(Configuracao, "meta_frota_km_l")
+    meta_media = configured_meta.valor if configured_meta else (sum(v.meta_km_l for v in veiculos_ativos) / len(veiculos_ativos) if veiculos_ativos else 3.00)
 
     return KpiSummary(
         consumo_medio_frota=consumo_medio,

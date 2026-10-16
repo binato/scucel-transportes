@@ -3,12 +3,26 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import engine, Base, SessionLocal
+from sqlalchemy import inspect, text
 from .models import Veiculo
-from .routers import dashboard, abastecimentos, despesas, veiculos, vision_ai
+from .routers import dashboard, abastecimentos, despesas, veiculos, uploads
 from .services.excel_importer import import_excel_data
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+# Small additive migration for databases created before receipt support.
+with engine.begin() as connection:
+    inspector = inspect(connection)
+    additions = {
+        "abastecimentos": {"client_id": "VARCHAR(100)"},
+        "despesas": {"foto_comprovante_url": "VARCHAR(255)"},
+    }
+    for table, columns in additions.items():
+        existing = {column["name"] for column in inspector.get_columns(table)}
+        for name, definition in columns.items():
+            if name not in existing:
+                connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {definition}"))
+    connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_abastecimentos_client_id ON abastecimentos (client_id)"))
 
 app = FastAPI(
     title="Scucel Transportes API",
@@ -35,7 +49,7 @@ app.include_router(dashboard.router)
 app.include_router(abastecimentos.router)
 app.include_router(despesas.router)
 app.include_router(veiculos.router)
-app.include_router(vision_ai.router)
+app.include_router(uploads.router)
 
 @app.on_event("startup")
 def on_startup():

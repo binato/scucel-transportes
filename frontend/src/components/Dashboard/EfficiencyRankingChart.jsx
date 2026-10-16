@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { Trophy, Info } from 'lucide-react';
 
-export default function EfficiencyRankingChart({ ranking, onSelectTruck, selectedVehicleId }) {
+export default function EfficiencyRankingChart({ ranking, onSelectTruck, selectedVehicleId, fleetTarget }) {
   if (!ranking || ranking.length === 0) {
     return (
       <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -102,7 +102,7 @@ export default function EfficiencyRankingChart({ ranking, onSelectTruck, selecte
               tickFormatter={(v) => `${v.toFixed(1)}`}
             />
             <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine y={3.05} stroke="#38bdf8" strokeDasharray="4 4" label={{ value: 'Meta Frota 3.05', fill: '#38bdf8', fontSize: 10, position: 'top' }} />
+            <ReferenceLine y={fleetTarget || 3} stroke="#38bdf8" strokeDasharray="4 4" label={{ value: `Meta Frota ${(fleetTarget || 3).toFixed(2)}`, fill: '#38bdf8', fontSize: 10, position: 'top' }} />
             <Bar 
               dataKey="consumo_medio_km_l" 
               radius={[6, 6, 0, 0]}

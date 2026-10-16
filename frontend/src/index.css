@@ -271,3 +271,41 @@ body {
   border-color: #3b82f6;
   box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
 }
+
+.manual-entry { max-width: 1000px; margin: 0 auto; padding: 1.25rem; }
+.manual-entry h2, .manual-entry h3 { margin-bottom: 1rem; }
+.manual-entry h3 { margin-top: 2rem; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0.9rem; margin: 1rem 0; }
+.form-grid label, .fleet-target label { display: flex; flex-direction: column; gap: 0.35rem; color: var(--text-secondary); font-size: 0.82rem; }
+.form-grid .input-custom { width: 100%; min-width: 0; }
+.form-grid a { align-self: center; color: #93c5fd; }
+.check-label { display: flex; gap: 0.5rem; align-items: center; margin: 1rem 0; }
+.entry-context { padding: 0.75rem; background: #0e1524; border-radius: 8px; color: #cbd5e1; line-height: 1.5; }
+.form-message { padding: 0.7rem; margin: 0.7rem 0; background: #1e293b; border-radius: 8px; }
+.form-actions, .entry-buttons, .fleet-target { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.recent-entry { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.85rem 0; border-bottom: 1px solid var(--border-subtle); }
+.recent-entry small { color: var(--text-secondary); }
+.fleet-target { margin: 1rem 0; }
+.fleet-target .input-custom { max-width: 140px; }
+.main-nav { flex-wrap: wrap; min-width: 0; }
+.input-custom[type="file"] { max-width: 100%; }
+
+@media (max-width: 650px) {
+  main { padding-left: 0.65rem !important; padding-right: 0.65rem !important; }
+  header.glass-panel { margin: 0.65rem !important; padding: 0.75rem !important; }
+  .main-nav { width: 100%; overflow-x: auto; }
+  .main-nav { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow-x: visible; }
+  .main-nav button { min-width: 0; width: 100%; justify-content: center; padding: 0.5rem 0.3rem !important; }
+  .main-nav button span { white-space: normal; text-align: center; font-size: 0.72rem; }
+  .main-nav .nav-badge { display: none; }
+  .filter-content, .filter-fields { min-width: 0; width: 100%; }
+  .filter-fields > div { max-width: 100%; }
+  .filter-fields select { max-width: calc(100vw - 5rem); min-width: 0 !important; }
+  .dashboard-chart-grid > * { min-width: 0; overflow-wrap: anywhere; }
+  .fleet-heading { flex-direction: column; align-items: stretch !important; }
+  .fleet-heading > button { width: 100%; justify-content: center; }
+  .manual-entry { padding: 0.85rem; }
+  .recent-entry { align-items: stretch; flex-direction: column; }
+  .entry-buttons button { flex: 1; justify-content: center; }
+  .powerbi-table { min-width: 920px; }
+}

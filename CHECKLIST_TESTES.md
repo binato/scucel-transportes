@@ -13,14 +13,14 @@ Este checklist registra o status dos testes e validações das funcionalidades d
   - Acessar `http://localhost:5173/` e validar os 6 cards de KPIs, gráficos de ranking de consumo, evolução mensal, donut de despesas e matriz de auditoria ARLA.
 - [x] **2. Cross-Filtering Interativo**
   - Testar filtros clicáveis (slicers de meses, veículos/placas e clique direto nas barras do gráfico).
-- [x] **3. Conferência IA (WhatsApp / OCR Multimodal)**
-  - Navegar até o menu **"Conferência IA (WhatsApp)"**, clicar em *"Carregar Foto Exemplo"* e validar a extração de dados lado a lado com zoom.
-- [x] **4. Digitação Rápida Assistida (Entrada Manual)**
-  - Navegar até **"Digitação Rápida"** e testar o cálculo instantâneo de KM rodado, KM/L e R$/KM.
-- [ ] **5. App Motorista (PWA Offline-First)** *(Pendente)*
-  - Navegar até **"App Motorista (PWA)"**, testar o simulador de lançamento sem sinal (offline storage) e a sincronização automática.
-- [ ] **6. Gestão de Frota & Metas** *(Pendente)*
-  - Navegar até **"Frota & Metas"**, verificar a listagem dos 10 caminhões cadastrados e ajuste de metas de consumo (KM/L).
+- [x] **3. CRUD de abastecimentos e comprovantes (API local)**
+  - `python -m unittest discover -s backend/tests -v`: criação retroativa, edição, exclusão com despesa vinculada, idempotência e upload de imagem.
+- [x] **4. Digitação Rápida (interface móvel)**
+  - Seleção de caminhão, formulário e lista das entradas recentes em viewport de 320 e 390 px. Editar carregou o formulário e Duplicar iniciou nova entrada com KM vazio no teste de navegador local.
+- [ ] **5. App Motorista (PWA Offline-First)** *(homologação em aparelho pendente)*
+  - Testar câmera, armazenamento de imagens sem sinal, recarga offline e sincronização automática ao reconectar.
+- [ ] **6. Gestão de Frota & Metas** *(gravação visual pendente)*
+  - Verificar a edição da meta de um caminhão e da meta da frota no navegador, inclusive atualização do dashboard.
 - [ ] **7. Resumo & Homologação Final** *(Pendente)*
   - Gerar o relatório consolidado de testes do sistema.
 
@@ -30,3 +30,9 @@ Este checklist registra o status dos testes e validações das funcionalidades d
 
 - **Backend (FastAPI):** `http://localhost:8000` | Documentação Swagger: `http://localhost:8000/docs`
 - **Frontend (React + Vite):** `http://localhost:5173`
+
+## Verificações automatizadas desta atualização
+
+- `npm run build` no diretório `frontend` concluiu sem erro.
+- `node frontend/scripts/mobile-check.mjs 320` e `node frontend/scripts/mobile-check.mjs 390` não detectaram rolagem horizontal na página; os gráficos/tabela usam rolagem interna quando necessário.
+- A prévia do build em `localhost:4173` foi recarregada offline: o service worker manteve a interface e a lista dos 10 caminhões em cache.

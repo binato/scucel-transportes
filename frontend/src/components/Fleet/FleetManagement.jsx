@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Truck, Plus, Check, Edit2, Shield, Fuel } from 'lucide-react';
-import { API_BASE_URL } from '../../services/api';
+import { API_BASE_URL, fetchMetaFrota, updateMetaFrota, updateVeiculo } from '../../services/api';
 
 export default function FleetManagement({ veiculos, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
@@ -10,6 +10,28 @@ export default function FleetManagement({ veiculos, onRefresh }) {
   const [metaKmL, setMetaKmL] = useState('3.05');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [fleetTarget, setFleetTarget] = useState('3.00');
+  const [vehicleTargets, setVehicleTargets] = useState({});
+
+  useEffect(() => {
+    fetchMetaFrota().then(data => setFleetTarget(String(data.meta_km_l))).catch(err => setMsg({ type: 'error', text: err.message }));
+  }, []);
+
+  const saveFleetTarget = async () => {
+    try {
+      await updateMetaFrota(Number(fleetTarget));
+      setMsg({ type: 'success', text: 'Meta da frota salva.' });
+      onRefresh?.();
+    } catch (err) { setMsg({ type: 'error', text: err.message }); }
+  };
+
+  const saveVehicleTarget = async vehicle => {
+    try {
+      await updateVeiculo(vehicle.id, { ...vehicle, meta_km_l: Number(vehicleTargets[vehicle.id] ?? vehicle.meta_km_l) });
+      setMsg({ type: 'success', text: `Meta de ${vehicle.placa} salva.` });
+      onRefresh?.();
+    } catch (err) { setMsg({ type: 'error', text: err.message }); }
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -50,7 +72,7 @@ export default function FleetManagement({ veiculos, onRefresh }) {
   return (
     <div className="glass-panel" style={{ padding: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
       
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+      <div className="fleet-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Truck size={22} color="#60a5fa" />
           <div>
@@ -85,6 +107,11 @@ export default function FleetManagement({ veiculos, onRefresh }) {
           {msg.text}
         </div>
       )}
+
+      <div className="fleet-target">
+        <label>Meta da frota (KM/L) <input className="input-custom" type="number" min="0.01" step="0.01" value={fleetTarget} onChange={event => setFleetTarget(event.target.value)} /></label>
+        <button className="btn-secondary" onClick={saveFleetTarget}>Salvar meta da frota</button>
+      </div>
 
       {/* New Truck Form Modal */}
       {showModal && (
@@ -200,6 +227,10 @@ export default function FleetManagement({ veiculos, onRefresh }) {
                 <Fuel size={14} color="#34d399" />
                 <span>Meta: <strong style={{ color: '#34d399' }}>{v.meta_km_l.toFixed(2)} KM/L</strong></span>
               </div>
+            </div>
+            <div className="fleet-target">
+              <input aria-label={`Meta de ${v.placa} em KM/L`} className="input-custom" type="number" min="0.01" step="0.01" value={vehicleTargets[v.id] ?? v.meta_km_l} onChange={event => setVehicleTargets(previous => ({ ...previous, [v.id]: event.target.value }))} />
+              <button className="btn-secondary" onClick={() => saveVehicleTarget(v)}>Salvar</button>
             </div>
           </div>
         ))}

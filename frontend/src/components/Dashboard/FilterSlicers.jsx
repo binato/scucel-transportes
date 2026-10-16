@@ -26,10 +26,10 @@ export default function FilterSlicers({
 
   return (
     <div className="glass-panel" style={{ padding: '0.85rem 1.25rem', marginBottom: '1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.85rem' }}>
+      <div className="filter-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.85rem' }}>
         
         {/* Left Filter Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+        <div className="filter-fields" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#60a5fa', fontWeight: '700', fontSize: '0.82rem' }}>
             <Filter size={16} />

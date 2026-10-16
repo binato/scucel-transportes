@@ -7,8 +7,7 @@ import ConsumptionTimelineChart from './components/Dashboard/ConsumptionTimeline
 import ExpensesDonutChart from './components/Dashboard/ExpensesDonutChart';
 import ArlaAuditChart from './components/Dashboard/ArlaAuditChart';
 import DataTableMatrix from './components/Dashboard/DataTableMatrix';
-import SideBySideReviewModal from './components/Ingestion/SideBySideReviewModal';
-import FastManualEntryGrid from './components/Ingestion/FastManualEntryGrid';
+import ManualEntry from './components/Ingestion/ManualEntry';
 import DriverMobilePwa from './components/DriverApp/DriverMobilePwa';
 import FleetManagement from './components/Fleet/FleetManagement';
 
@@ -23,7 +22,6 @@ import {
   fetchVeiculos,
   deleteAbastecimento,
   deleteDespesa,
-  API_BASE_URL
 } from './services/api';
 
 export default function App() {
@@ -54,10 +52,13 @@ export default function App() {
     fetchVeiculos()
       .then(data => {
         setVeiculos(data);
+        localStorage.setItem('scucel_veiculos_cache', JSON.stringify(data));
         setApiOnline(true);
       })
       .catch(err => {
         console.error('API connection check failed', err);
+        try { setVeiculos(JSON.parse(localStorage.getItem('scucel_veiculos_cache') || '[]')); }
+        catch { setVeiculos([]); }
         setApiOnline(false);
       });
   }, []);
@@ -133,15 +134,15 @@ export default function App() {
 
   const handleDeleteAbastecimento = async (id) => {
     if (window.confirm('Deseja realmente remover este registro de abastecimento?')) {
-      await deleteAbastecimento(id);
-      loadDashboardData();
+      try { await deleteAbastecimento(id); await loadDashboardData(); }
+      catch (error) { window.alert(error.message); }
     }
   };
 
   const handleDeleteDespesa = async (id) => {
     if (window.confirm('Deseja realmente remover este lançamento de despesa?')) {
-      await deleteDespesa(id);
-      loadDashboardData();
+      try { await deleteDespesa(id); await loadDashboardData(); }
+      catch (error) { window.alert(error.message); }
     }
   };
 
@@ -207,7 +208,7 @@ export default function App() {
             {/* Row 1 Charts: Ranking KM/L + Monthly Evolution */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
               gap: '1.25rem',
               marginBottom: '1.25rem'
             }}>
@@ -215,6 +216,7 @@ export default function App() {
                 ranking={ranking}
                 onSelectTruck={handleSelectTruckFromChart}
                 selectedVehicleId={filters.veiculo_id}
+                fleetTarget={kpis?.meta_consumo_frota}
               />
               <ConsumptionTimelineChart evolucao={evolucao} />
             </div>
@@ -222,7 +224,7 @@ export default function App() {
             {/* Row 2 Charts: Expenses Donut + Arla 32 Audit */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
               gap: '1.25rem',
               marginBottom: '1.25rem'
             }}>
@@ -244,22 +246,10 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: SIDE BY SIDE AI REVIEW (WHATSAPP PHOTO) */}
-        {activeTab === 'ia-vision' && (
-          <div className="animate-fade-in">
-            <SideBySideReviewModal
-              veiculos={veiculos}
-              onSuccessSave={() => {
-                loadDashboardData();
-              }}
-            />
-          </div>
-        )}
-
         {/* TAB 3: FAST MANUAL ENTRY (FERNANDA) */}
         {activeTab === 'manual-entry' && (
           <div className="animate-fade-in">
-            <FastManualEntryGrid
+            <ManualEntry
               veiculos={veiculos}
               onSuccessSave={() => {
                 loadDashboardData();

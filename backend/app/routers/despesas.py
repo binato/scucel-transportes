@@ -49,7 +49,8 @@ def create_despesa(payload: DespesaCreate, db: Session = Depends(get_db)):
         data=payload.data,
         categoria=payload.categoria or "OUTROS",
         descricao=payload.descricao,
-        valor=payload.valor
+        valor=payload.valor,
+        foto_comprovante_url=payload.foto_comprovante_url
     )
     db.add(desp)
     db.commit()
@@ -57,6 +58,21 @@ def create_despesa(payload: DespesaCreate, db: Session = Depends(get_db)):
 
     resp = DespesaResponse.model_validate(desp)
     resp.placa = veiculo.placa
+    return resp
+
+@router.put("/{id}", response_model=DespesaResponse)
+def update_despesa(id: int, payload: DespesaCreate, db: Session = Depends(get_db)):
+    item = db.get(Despesa, id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Despesa não encontrada")
+    if not db.get(Veiculo, payload.veiculo_id):
+        raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    for key, value in payload.model_dump().items():
+        setattr(item, key, value)
+    db.commit()
+    db.refresh(item)
+    resp = DespesaResponse.model_validate(item)
+    resp.placa = item.veiculo.placa
     return resp
 
 @router.delete("/{id}")

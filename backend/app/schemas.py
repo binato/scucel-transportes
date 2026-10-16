@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Optional
 from datetime import date, datetime
 
 # Veículo
@@ -8,7 +8,7 @@ class VeiculoBase(BaseModel):
     modelo: Optional[str] = "Caminhão Scucel"
     ano: Optional[int] = None
     tipo: Optional[str] = "Cavalo Mecânico"
-    meta_km_l: Optional[float] = 3.00
+    meta_km_l: Optional[float] = Field(default=3.00, gt=0)
     ativo: Optional[bool] = True
 
 class VeiculoCreate(VeiculoBase):
@@ -39,27 +39,37 @@ class AbastecimentoBase(BaseModel):
     motorista_id: Optional[int] = None
     data: date
     km_inicial: Optional[int] = None
-    km_final: int
-    litros_diesel: float
-    litros_arla: Optional[float] = 0.0
-    valor_total_nota: float
+    km_final: int = Field(ge=0)
+    litros_diesel: float = Field(gt=0)
+    litros_arla: float = Field(default=0.0, ge=0)
+    valor_total_nota: float = Field(ge=0)
     origem_registro: Optional[str] = "MANUAL"
     foto_comprovante_url: Optional[str] = None
     aprovado: Optional[bool] = True
     observacoes: Optional[str] = None
 
+class DespesaVinculada(BaseModel):
+    categoria: str = "OUTROS"
+    descricao: str = Field(min_length=1)
+    valor: float = Field(gt=0)
+    foto_comprovante_url: Optional[str] = None
+
 class AbastecimentoCreate(AbastecimentoBase):
-    km_rodado: Optional[int] = None
-    media_km_l: Optional[float] = None
-    custo_km_diesel: Optional[float] = None
+    despesa: Optional[DespesaVinculada] = None
+    client_id: Optional[str] = None
 
 class AbastecimentoResponse(AbastecimentoBase):
     id: int
+    km_final: int
+    litros_diesel: float
+    litros_arla: float
+    valor_total_nota: float
     km_rodado: int
     media_km_l: Optional[float] = None
     custo_km_diesel: Optional[float] = None
     placa: Optional[str] = None
     created_at: datetime
+    despesa: Optional[DespesaVinculada] = None
     class Config:
         from_attributes = True
 
@@ -71,36 +81,19 @@ class DespesaBase(BaseModel):
     data: date
     categoria: Optional[str] = "OUTROS"
     descricao: str
-    valor: float
+    valor: float = Field(gt=0)
+    foto_comprovante_url: Optional[str] = None
 
 class DespesaCreate(DespesaBase):
     pass
 
 class DespesaResponse(DespesaBase):
     id: int
+    valor: float
     placa: Optional[str] = None
     created_at: datetime
     class Config:
         from_attributes = True
-
-# Lote com IA / Manual
-class ExtracaoLinhaAbastecimento(BaseModel):
-    data: Optional[str] = None
-    km_atual: Optional[int] = None
-    litros_diesel: Optional[float] = None
-    litros_arla: Optional[float] = 0.0
-    valor_total_nota: Optional[float] = None
-    despesa_descricao: Optional[str] = None
-    despesa_valor: Optional[float] = None
-    confianca: Optional[float] = 1.0
-
-class ExtracaoIaResponse(BaseModel):
-    placa_detectada: Optional[str] = None
-    data_documento: Optional[str] = None
-    linhas: List[ExtracaoLinhaAbastecimento]
-    foto_url: Optional[str] = None
-    tempo_processamento_ms: Optional[int] = None
-    aviso: Optional[str] = None
 
 # Dashboard Aggregations
 class KpiSummary(BaseModel):
