@@ -6,4 +6,5 @@ openpyxl>=3.1.0
 requests>=2.31.0
 python-multipart>=0.0.9
 pydantic-settings>=2.2.0
-psycopg2-binary>=2.9.9
+# SQLAlchemy selects the Psycopg 3 dialect for PostgreSQL URLs in the deployed image.
+psycopg[binary]>=3.1.0
